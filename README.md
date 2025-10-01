@@ -14,5 +14,6 @@ We study the social return on government funding for basic and applied research.
 
     **Data Dictionary and Linking.** The data dictionary can be found [here](https://report.nih.gov/exporter-data-dictionary). Link tables
     for each of the bulk files can be found [here](https://reporter.nih.gov/exporter/linktables)
+3. [**NIH RePORT Data**](https://report.nih.gov/award/index.cfm?ot=&fy=1999&state=&ic=&fm=&orgid=&distr=&rfa=&om=n&pid=#tab5)
 
-    
+    **Description.** Supplements the ExPORTER data. Sometimes ExPORTER does not populate the total cost field while the same project number in the RePORT data has an associated funding amount.
