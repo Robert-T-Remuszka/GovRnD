@@ -20,3 +20,13 @@ We study the social return on government funding for basic and applied research.
 3. [**NIH RePORT Data**](https://report.nih.gov/award/index.cfm?ot=&fy=1999&state=&ic=&fm=&orgid=&distr=&rfa=&om=n&pid=#tab5)
 
     **Description.** Supplements the ExPORTER data. Sometimes ExPORTER does not populate the total cost field while the same project number in the RePORT data has an associated funding amount.
+
+
+## Code Remarks and Run Order
+
+**Remark I.** To run the cleaning code that generates our analysis files from the raw data you must install a package from Stata's ssc,
+```stata
+ssc install xframeappend
+``` 
+
+**Remark II.** You should set your working directory to the code folder. All relative file paths defined in the globals files are relative to code.
