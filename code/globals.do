@@ -5,3 +5,4 @@ glo graphs ${output}/graphs
 glo patents "${data}/PatentsView"
 glo bea "${data}/BEA"
 glo contracts "${data}/G Contracts"
+glo narrshocks "${data}/Fieldhouse_Mertens"

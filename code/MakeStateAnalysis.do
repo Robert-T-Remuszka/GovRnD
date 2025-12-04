@@ -4,8 +4,9 @@ do globals
 
 frame create mergethis
 
-loc CleanBea 1
+loc CleanBea       1
 loc CleanContracts 1
+loc CleanShocks    1
 
 /********************************
                 BEA
@@ -80,8 +81,6 @@ if `CleanBea' {
     frame drop stateabb
 }
 
-
-
 /********************************
     USA Spending Contracts
 *********************************/
@@ -121,7 +120,75 @@ if `CleanContracts' {
         tempfile mergethis
         save `mergethis', replace   
     }
+
+    * Bring it all together - 3,800 state-quarter observations from 2005q1 to 2023q4
+    merge 1:1 stateabb dateq using `mergethis', nogen keep(3)
+    frame drop mergethis
+
 }
 
-* Bring it all together - 3,800 state-quarter observations from 2005q1 to 2023q4
-merge 1:1 stateabb dateq using `mergethis', nogen keep(3)
+/********************************
+    Fieldhouse Mertens Shocks
+*********************************/
+if `CleanShocks' {
+    
+    frame create mergethis
+    frame mergethis {
+        import excel "${narrshocks}/rgrd_preliminary.xlsx", clear sheet("Quarterly Nominal R&D Shocks")
+        ren A datestr
+        drop N O P Q R S
+        qui ds datestr, not
+        foreach v in `r(varlist)' {
+            loc part1 = subinstr(`v'[1], ": ", "_", 1)
+            loc part2 = "_" + `v'[2]
+            loc newname = "`part1'" + "`part2'"
+            ren `v' `newname'
+        }
+
+        * Extra meta-data, just remember the shocks are in millions will rescale later
+        drop if _n <= 3
+        drop *_Endogenous
+
+        * Make numerical
+        qui ds datestr, not
+        foreach v in `r(varlist)' {
+            destring `v', replace force
+            replace `v' = `v' * 1e+6
+        }
+
+        * Create quarterly dates
+        replace datestr = substr(datestr, 1, 4) + "q1" if strlen(datestr) == 4
+        replace datestr = substr(datestr, 1, 4) + "q2" if substr(datestr, 5, 3) == ".25"
+        replace datestr = substr(datestr, 1, 4) + "q3" if substr(datestr, 5, 2) == ".5"
+        replace datestr = substr(datestr, 1, 4) + "q4" if substr(datestr, 5, 3) == ".75"
+        gen dateq = quarterly(datestr, "YQ")
+        format dateq %tq
+        drop datestr
+        order dateq
+
+        * Tidy labels
+        qui ds dateq, not
+        foreach v in `r(varlist)' {
+
+
+            loc agency = subinstr("`v'", "_Exogenous", "", 1)
+            ren `v' `agency'
+            if substr("`v'", 1, 3) == "DOE" {
+                loc category = subinstr("`agency'", "DOE_", "", 1)
+                la var `agency' "DOE `category' Shock (Current dollars)"
+            }
+            else {
+                la var `agency' "`agency' Shock (Current dollars)"
+            }
+        }
+
+        tempfile shocks
+        save `shocks', replace
+    }
+
+    * We now have 3000 state quarter observations from 2005q1 to 2019q4
+    merge m:1 dateq using `shocks', nogen keep(3)
+    
+}
+
+
