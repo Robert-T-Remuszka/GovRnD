@@ -5,7 +5,7 @@ We study the social return on government funding for basic and applied research.
 
 ## Data Sources
 1. [Quarterly State GDP](https://www.bea.gov/data/gdp/gdp-state) - Go to the interactive tables.
+2. [Usa Spending Contract Data](https://www.usaspending.gov/)
 
 ## Code Remarks and Run Order
-
 **Remark I.** You should set your working directory to the code folder. All file paths are relative the code folder.

@@ -4,3 +4,4 @@ glo tables ${output}/tables
 glo graphs ${output}/graphs
 glo patents "${data}/PatentsView"
 glo bea "${data}/BEA"
+glo contracts "${data}/G Contracts"
