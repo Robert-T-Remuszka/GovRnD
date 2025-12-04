@@ -7,6 +7,7 @@ frame create mergethis
 loc CleanBea       1
 loc CleanContracts 1
 loc CleanShocks    1
+loc CleanPatents   1
 
 /********************************
                 BEA
@@ -188,7 +189,86 @@ if `CleanShocks' {
 
     * We now have 3000 state quarter observations from 2005q1 to 2019q4
     merge m:1 dateq using `shocks', nogen keep(3)
-    
+    frame drop mergethis
 }
 
+
+/********************************
+    Patents
+*********************************/
+if `CleanPatents' {
+
+    frame create patents 
+    frame patents {
+        import delimited "${patents}/g_patent.tsv", clear
+        keep if patent_type == "utility" & !withdrawn
+
+        keep patent_id patent_date patent_title num_claims
+        tempfile patents
+        save "`patents'", replace
+    }
+
+    frame create inventors
+    frame inventors {
+
+        import delimited "${patents}/g_inventor_disambiguated.tsv", clear
+
+        * Keep the first named invetor on the patent
+        keep if inventor_sequence == 0 
+        
+        tempfile inventors
+        save "`inventors'", replace
+    }
+
+    frame create locations
+    frame locations {
+        import delimited "${patents}/g_location_disambiguated.tsv", clear
+        tempfile locations
+        save "`locations'", replace
+    }
+
+    * Merging it all
+    frame patents {
+
+        * Patents to their inventors - 8,342,330 patents paired to their inventors
+        merge m:1 patent_id using "`inventors'", keep(3) nogen
+
+        * Patents to the locations - 8,273,586 matched
+        merge m:1 location_id using "`locations'", keep(3) nogen
+
+        * Keep invetions which spawned in the US - 4,172,983
+        keep if disambig_country == "US"
+
+        * dropping a mere 10,126
+        drop if mi(state_fips)
+
+        * Create a quarterly date
+        gen dated = date(patent_date, "YMD")
+        format dated %td
+        gen dateq = qofd(dated)
+        format dateq %tq
+        order dated dateq state_fips
+
+        tostring state_fips, gen(statefip)
+        replace statefip = "0" + statefip if strlen(statefip) == 1
+
+        gen counter = 1
+        collapse (sum) counter, by(statefip dateq)
+
+        ren counter patent_count
+        la var patent_count "Patents granted"
+
+        tempfile patents
+        save "`patents'", replace
+
+        frame drop inventors
+        frame drop locations
+
+    }
+
+    * All 3000 observations matched
+    merge 1:1 dateq statefip using "`patents'", nogen keep(3)
+
+    save "${data}/StateAnalysisFile.dta", replace
+}
 
