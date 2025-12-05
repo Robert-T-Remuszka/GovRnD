@@ -45,6 +45,7 @@ if `CleanBea' {
     qui ds gdp_*
     foreach v in `r(varlist)' {
         destring `v', replace force
+        replace `v' = `v' * 1e+6 // was in millions
     }
     
     * Still have regions in there
