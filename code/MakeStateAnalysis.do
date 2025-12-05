@@ -269,7 +269,6 @@ if `CleanPatents' {
 
     * All 3000 observations matched
     merge 1:1 dateq statefip using "`patents'", nogen keep(3)
-    save "${data}/StateAnalysisFile.dta", replace
     frame drop patents
 }
 
@@ -297,5 +296,7 @@ if `CleanDeflator' {
 
     * Merge it in
     merge m:1 dateq using `Deflator', nogen keep(1 3)
+    frame drop Deflator
+    save "${data}/StateAnalysisFile.dta", replace
 }
 
