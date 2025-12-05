@@ -8,6 +8,7 @@ loc CleanBea       1
 loc CleanContracts 1
 loc CleanShocks    1
 loc CleanPatents   1
+loc CleanDeflator  1
 
 /********************************
                 BEA
@@ -268,7 +269,33 @@ if `CleanPatents' {
 
     * All 3000 observations matched
     merge 1:1 dateq statefip using "`patents'", nogen keep(3)
-
     save "${data}/StateAnalysisFile.dta", replace
+    frame drop patents
+}
+
+/********************************
+    Merge in GDP Deflator (2017 == 100)
+*********************************/
+if `CleanDeflator' {
+
+    frame create Deflator
+    frame Deflator {
+
+        import delimited "${data}/GDP_Deflator_Fred.csv", clear
+        la var gdp "GDP Defaltor (2017 = 100)"
+
+        gen dated = date(observation, "YMD")
+        format dated %td
+        gen dateq = qofd(dated)
+        format dateq %tq
+        keep dateq gdp
+
+        tempfile Deflator
+        save `Deflator', replace
+
+    }
+
+    * Merge it in
+    merge m:1 dateq using `Deflator', nogen keep(1 3)
 }
 
