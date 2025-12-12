@@ -35,7 +35,7 @@ forvalues h = `preperiod'/`postperiod' {
     }
 
     if `h' != -1 {
-        qui reghdfe `y' `x', absorb(county_num year)
+        qui reghdfe `y' `x', absorb(county_num year) vce(cluster county_num)
         frame Estimates {
             replace beta_ols = _b[`x']  if h == `h'
             replace se_ols   = _se[`x'] if h == `h'
@@ -49,5 +49,7 @@ frame Estimates {
     gen upper_ols = beta_ols + 1.645 * se_ols
     gen lower_ols = beta_ols - 1.645 * se_ols
     tw line beta_ols h, lcolor(ebblue) || rarea upper_ols lower_ols h, fcolor(ebblue%30) lwidth(none) ///
+    yline(0, lcolor(black) lpattern(dash)) ///
     xlab(`preperiod'(1)`postperiod', nogrid) ylab(, nogrid) legend(off)
+    
 }
