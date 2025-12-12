@@ -108,11 +108,16 @@ program PreProcessCounty
 
     gen rgdp = gdp * 100 / gdpdef
 
-    * Create growth rates for right hand side
-    egen total_obligated = rowtotal(*_tall_real)
+    * Create right hand side vars
     egen total_expost_pmt = rowtotal(*_wide_real)
-    gen  total_obligated_delta = (total_obligated  - l.total_obligated) / l.rgdp
+    replace total_expost_pmt = total_expost_pmt - other_wide_real
     gen  total_expost_pmt_norm = total_expost_pmt / l.rgdp
+    gen  basic_expost_pmt_norm = basic_wide_real  / l.rgdp
+    gen  applied_expost_pmt_norm = applied_wide_real / l.rgdp
+    gen  other_expost_pmt_norm = other_wide_real / l.rgdp
+    gen  total_expost_pmt_diff_norm = (total_expost_pmt - l.total_expost_pmt)/l.rgdp
+    gen  basic_expost_pmt_diff_norm = (basic_wide_real -  l.basic_wide_real)/l.rgdp
+    gen  applied_expost_pmt_diff_norm = (applied_wide_real - l.applied_wide_real)/l.rgdp
 
     * Changes for left hand side
     forvalues h = -5/16 {
@@ -121,11 +126,13 @@ program PreProcessCounty
         if `h' < 0 {
             
             gen rgdp_L`hzn' = log(l`hzn'.rgdp / l.rgdp)
+            gen patents_L`hzn' = asinh(l`hzn'.patent_count) - asinh(l.patent_count)
 
         }
         else {
 
             gen rgdp_H`hzn' = log(f`hzn'.rgdp / l.rgdp)
+            gen patents_H`hzn' = asinh(f`hzn'.patent_count) - asinh(l.patent_count)
         }
     }
 
