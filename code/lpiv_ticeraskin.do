@@ -6,9 +6,9 @@ clear all
 set more off
 
 do globals
-do functions
+do functions_ticeraskin
 
-use "data/CountyAnalysisFile.dta", clear
+use "${data}/CountyAnalysisFile.dta", clear
 
 *======================================================
 *RUN PREPROCESSING
@@ -171,8 +171,8 @@ frame GDP_IV {
         plotregion(color(white) margin(small) lcolor(black) lwidth(0.3)) ///
         name(lp_gdp_pro, replace)
 
-    graph export "lp_gdp_iv_nw.pdf", replace
-    graph export "lp_gdp_iv_nw.png", replace width(2400)
+    graph export "${graphs}/lp_gdp_iv_nw.pdf", replace
+    graph export "${graphs}/lp_gdp_iv_nw.png", replace width(2400)
 }
 
 *======================================================
@@ -323,6 +323,6 @@ frame PATENTS_IV {
         plotregion(color(white) margin(small) lcolor(black) lwidth(0.3)) ///
         name(lp_patents_pro, replace)
 
-    graph export "lp_patents_iv_nw.pdf", replace
-    graph export "lp_patents_iv_nw.png", replace width(2400)
+    graph export "${graphs}/lp_patents_iv_nw.pdf", replace
+    graph export "${graphs}/p_patents_iv_nw.png", replace width(2400)
 }
