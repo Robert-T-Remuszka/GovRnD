@@ -1,9 +1,32 @@
 clear all
 do globals
 
+* For a loop across contract years
 frame create contracts_appended
 
-* The recipient_duns field is missing for all obs in 2023, hence i stop in 2022
+* Import PSC code and county FIPS
+import delimited "${contracts}/ticeraskin_remuszka.csv", clear
+
+* Prepare these for a merge with rest of contract data
+ren contract_transaction_unique_key trans_id
+ren product_or_service_code         psc_code
+
+ren prime_award county_fips
+replace county_fips = subinstr(county_fips, ".0", "", 1)
+replace county_fips = "" if county_fips == "."
+la var county_fips ""
+drop federal_action_obligation
+
+* Clean up the fips codes - one observation with fips == "MACOMB"
+replace county_fips = "0" + county_fips if strlen(county_fips) == 4
+drop if strlen(county_fips) == 6
+
+tempfile psc
+save `psc'
+
+********* Loop
+
+* The recipient_duns field is missing for all obs in 2023, hence I stop in 2022
 loc loop_start 2001
 loc loop_stop  2022
 
@@ -24,13 +47,25 @@ foreach yyyy of numlist `loop_start'/`loop_stop' {
     la var recipient_id "Recipient unique ID"
     la var award_id     "Award-level unique ID"
     la var trans_id     "Transaction-level unique ID"
-    
-    sort recipient_id award_id trans_id 
+
+    * Attach PSC code and county FIPS
+    merge 1:1 trans_id using `psc', keep(master match) nogen
+
+    * Sort so non-missing PSC and county come first within each award. Useful for collapse (first); recall that missings are infinite in Stata
+    gen byte _m_psc    = missing(psc_code)
+    gen byte _m_county = missing(county_fips)
+    sort recipient_id award_id _m_psc _m_county trans_id
+    drop _m_psc _m_county
     order recipient_id award_id trans_id
 
     * Collapse all transactions on a contract into a total obligation
-    collapse (sum) total_obligation = federal_action, by(recipient_id award_id year awarding_agency_code recipient_name naics_code)
+    collapse (sum) total_obligation = federal_action ///
+             (first) psc_code county_fips, ///
+             by(recipient_id award_id year awarding_agency_code recipient_name naics_code)
+    
     la var total_obligation "Total contract obligation"
+    la var psc_code    "Product/Service Code"
+    la var county_fips "County FIPS (place of performance)"
 
     * Replace NA NAICS as missing
     gen naics_award = naics_code if naics_code != "NA"
@@ -76,10 +111,18 @@ la var recipient "Recipient name"
 * Some awards could not be associated with any industry
 drop if naics_pri == ""
 
-* Collapse total obligations for an award across years - consistent with earlier cleaning
-collapse (sum) total_obligation (min) year, by(award_id recipient_id recipient agcy_code naics_pri)
+* Collapse total obligations for an award across years
+gen byte _m_psc    = missing(psc_code)
+gen byte _m_county = missing(county_fips)
+sort award_id _m_psc _m_county
+drop _m_psc _m_county
+collapse (sum) total_obligation (min) year (first) psc_code county_fips, ///
+    by(award_id recipient_id recipient agcy_code naics_pri)
+
 la var total_obligation "Total ex-post obligation"
-la var year "year"
+la var year             "year"
+la var psc_code         "Product/Service Code"
+la var county_fips      "County FIPS (place of performance)"
 
 compress
 save "${data}/ContractsByIndustry.dta", replace
