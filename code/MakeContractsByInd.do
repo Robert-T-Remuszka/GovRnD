@@ -76,5 +76,10 @@ la var recipient "Recipient name"
 * Some awards could not be associated with any industry
 drop if naics_pri == ""
 
+* Collapse total obligations for an award across years - consistent with earlier cleaning
+collapse (sum) total_obligation (min) year, by(award_id recipient_id recipient agcy_code naics_pri)
+la var total_obligation "Total ex-post obligation"
+la var year "year"
+
 compress
 save "${data}/ContractsByIndustry.dta", replace
